@@ -20,6 +20,11 @@
 
     * { box-sizing: border-box; }
 
+    html, body {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
     body {
       margin: 0;
       background: var(--bg);
@@ -69,9 +74,11 @@
     }
 
     .calendar-paper {
+      width: 100%;
+      max-width: 100%;
       background: var(--paper);
       border: 2px solid var(--line);
-      overflow-x: auto;
+      overflow-x: hidden;
     }
 
     .calendar-title {
@@ -95,7 +102,6 @@
       border-collapse: collapse;
       table-layout: fixed;
       background: #ffffff;
-      min-width: 720px;
     }
 
     .year-calendar col.weekday-col { width: 11.11%; }
@@ -184,6 +190,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      max-width: 100%;
       color: #000000;
     }
 
