@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2026年 連続1枚紙カレンダー v5</title>
+  <style>
+    :root {
+      --bg: #f5f5f5;
+      --paper: #ffffff;
+      --text: #111111;
+      --muted: #555555;
+      --line: #000000;
+      --accent: #2563eb;
+      --accent-dark: #1d4ed8;
+      --today: #fff6bf;
+      --holiday: #d00000;
+      --danger: #dc2626;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+      padding-bottom: 88px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(255,255,255,0.96);
+      border-bottom: 2px solid var(--line);
+      padding: 10px 12px;
+    }
+
+    .header-inner {
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0.03em;
+    }
+
+    .header-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 12px;
+    }
+
+    .notice {
+      background: #ffffff;
+      border: 2px solid var(--line);
+      padding: 8px 10px;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .inline-sample {
+      margin-left: 8px;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .calendar-paper {
+      background: var(--paper);
+      border: 2px solid var(--line);
+      overflow-x: auto;
+    }
+
+    .calendar-title {
+      position: sticky;
+      top: 0;
+      z-index: 12;
+      height: 44px;
+      border-bottom: 2px solid var(--line);
+      padding: 0 12px;
+      font-size: 22px;
+      font-weight: 800;
+      text-align: center;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    table.year-calendar {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #ffffff;
+      min-width: 720px;
+    }
+
+    .year-calendar col.weekday-col { width: 11.11%; }
+    .year-calendar col.weekend-col { width: 22.22%; }
+
+    .year-calendar th,
+    .year-calendar td {
+      border: 1px solid var(--line);
+    }
+
+    .year-calendar th {
+      position: sticky;
+      top: 44px;
+      z-index: 11;
+      height: 32px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 800;
+      background: #ffffff;
+    }
+
+    .year-calendar th.sat,
+    .year-calendar th.sun { color: var(--holiday); }
+
+    .day-cell {
+      scroll-margin-top: 84px;
+      height: 84px;
+      vertical-align: top;
+      padding: 4px;
+      background: #ffffff;
+      cursor: pointer;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .day-cell.outside-year {
+      background: #eeeeee;
+      color: #777777;
+    }
+
+    .day-cell.today {
+      background: var(--today);
+      outline: 3px solid #000000;
+      outline-offset: -3px;
+    }
+
+    .day-cell.sat .day-number,
+    .day-cell.sun .day-number { color: var(--holiday); }
+
+    .day-number {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 3px;
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 3px;
+    }
+
+    .month-mark {
+      font-size: 11px;
+      font-weight: 800;
+      color: #111111;
+      white-space: nowrap;
+    }
+
+    .today-label {
+      font-size: 10px;
+      color: #000000;
+      border: 1px solid #000000;
+      padding: 0 3px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .event-pill {
+      display: block;
+      width: 100%;
+      border: none;
+      background: transparent;
+      padding: 0;
+      margin-top: 2px;
+      font-size: 11px;
+      line-height: 1.25;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #000000;
+    }
+
+    .event-pill.confirmed {
+      color: #d00000;
+      border: 2px solid #d00000;
+      padding: 1px 2px;
+      background: transparent;
+      box-sizing: border-box;
+    }
+
+    .more-events {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+      padding-left: 2px;
+    }
+
+    .bottom-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 30;
+      background: rgba(255,255,255,0.96);
+      border-top: 2px solid var(--line);
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    }
+
+    .bottom-inner {
+      max-width: 980px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button {
+      border: 2px solid #000000;
+      border-radius: 0;
+      padding: 10px 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #ffffff;
+      color: #111111;
+    }
+
+    button.primary { background: var(--accent); color: white; border-color: #000000; }
+    button.primary:hover { background: var(--accent-dark); }
+    button.danger { background: var(--danger); color: white; border-color: #000000; }
+    button.ghost { background: #ffffff; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 50;
+      padding: 12px;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      width: 100%;
+      max-width: 680px;
+      max-height: 92vh;
+      background: white;
+      border: 2px solid #000000;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      padding: 12px 14px;
+      border-bottom: 2px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .modal-body {
+      padding: 14px;
+      overflow: auto;
+    }
+
+    .close-btn {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .day-events-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .detail-card {
+      border: 2px solid var(--line);
+      padding: 10px;
+      background: #ffffff;
+    }
+
+    .detail-card h3 {
+      margin: 0 0 8px;
+      font-size: 17px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      margin: 2px 0;
+    }
+
+    .detail-text {
+      white-space: pre-wrap;
+      margin: 8px 0 0;
+      font-size: 14px;
+    }
+
+    .card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #111111;
+      display: grid;
+      gap: 5px;
+    }
+
+    label.inline-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    label.inline-check input {
+      width: auto;
+      min-width: 18px;
+      height: 18px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 2px solid var(--line);
+      border-radius: 0;
+      padding: 9px;
+      font: inherit;
+      background: white;
+    }
+
+    textarea { min-height: 86px; resize: vertical; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .form-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .history {
+      margin-top: 10px;
+      border-top: 1px solid var(--line);
+      padding-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 560px) {
+      .container { padding: 8px; }
+      .calendar-title { height: 38px; font-size: 18px; padding: 0 8px; }
+      .year-calendar th { top: 38px; font-size: 11px; height: 28px; }
+      .day-cell { scroll-margin-top: 72px; height: 74px; padding: 3px; }
+      .day-number { font-size: 12px; }
+      .month-mark { font-size: 9px; }
+      .event-pill { font-size: 10px; padding: 1px 2px; }
+      h1 { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <div class="notice">
+      ログインなし・パスコードなしの共有カレンダー試作版です。このHTML単体ではブラウザ内に保存します。Firebase接続後は、全員で同じ予定を共有できます。
+      <button class="ghost inline-sample" id="sampleBtn" type="button">サンプル予定</button>
+    </div>
+    <div id="calendar"></div>
+  </main>
+
+  <div class="bottom-bar">
+    <div class="bottom-inner">
+      <button id="todayBtn" type="button">今日へ</button>
+      <button id="addBtn" class="primary" type="button">予定追加</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="dayModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="dayModalTitle">日付</h2>
+        <button class="close-btn" type="button" data-close="dayModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="dayEvents" class="day-events-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="formModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="formTitle">予定追加</h2>
+        <button class="close-btn" type="button" data-close="formModal">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="eventForm" class="form-grid">
+          <input type="hidden" id="eventId" />
+          <label>タイトル
+            <input id="title" required maxlength="30" placeholder="例：練習試合" />
+          </label>
+          <div class="form-row">
+            <label class="inline-check"><input id="confirmed" type="checkbox" /> 確定</label>
+            <label>一覧の文字色
+              <select id="titleColor">
+                <option value="#000000">黒</option>
+                <option value="#1d4ed8">青</option>
+                <option value="#047857">緑</option>
+              </select>
+            </label>
+          </div>
+          <label>日付
+            <input id="date" type="date" min="2026-01-01" max="2026-12-31" required />
+          </label>
+          <label>内容
+            <textarea id="description" maxlength="500" placeholder="予定の内容"></textarea>
+          </label>
+          <label>投稿者・更新者名（任意）
+            <input id="editorName" maxlength="20" placeholder="未記入でも保存できます" />
+          </label>
+          <div class="form-actions">
+            <button type="button" class="ghost" data-close="formModal">キャンセル</button>
+            <button type="submit" class="primary">保存</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const YEAR = 2026;
+    const STORAGE_KEY = 'group-calendar-2026-events-v4-simple-fields';
+    const weekdayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    const mondayWeekdays = [1, 2, 3, 4, 5, 6, 0];
+    const mondayWeekdayLabels = ['月', '火', '水', '木', '金', '土', '日'];
+
+    let events = loadEvents();
+    let selectedDate = null;
+
+    const calendarEl = document.getElementById('calendar');
+    const dayEvents = document.getElementById('dayEvents');
+    const dayModalTitle = document.getElementById('dayModalTitle');
+    const eventForm = document.getElementById('eventForm');
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function dateKeyFromDate(d) { return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+    function dateKey(y, m, d) { return `${y}-${pad(m)}-${pad(d)}`; }
+    function addDays(d, days) {
+      const next = new Date(d);
+      next.setDate(next.getDate() + days);
+      return next;
+    }
+    function sameDate(a, b) {
+      return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    }
+    function nowText() {
+      const d = new Date();
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+    function generateId() { return `event-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`; }
+
+    function todayKey() {
+      const d = new Date();
+      if (d.getFullYear() === YEAR) return dateKey(YEAR, d.getMonth() + 1, d.getDate());
+      return `${YEAR}-01-01`;
+    }
+
+    function loadEvents() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function saveEvents() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+    }
+
+    function getEventsByDate(key) {
+      return events
+        .filter(e => !e.deleted && e.date === key)
+        .sort((a, b) => (a.title || '').localeCompare(b.title || '', 'ja'));
+    }
+
+    function renderCalendar() {
+      calendarEl.innerHTML = '';
+
+      const paper = document.createElement('section');
+      paper.className = 'calendar-paper';
+
+      const title = document.createElement('div');
+      title.className = 'calendar-title';
+      title.textContent = `${YEAR}年`;
+      paper.appendChild(title);
+
+      const table = document.createElement('table');
+      table.className = 'year-calendar';
+      table.setAttribute('aria-label', '2026年カレンダー');
+
+      const colgroup = document.createElement('colgroup');
+      mondayWeekdayLabels.forEach((label, index) => {
+        const col = document.createElement('col');
+        col.className = index >= 5 ? 'weekend-col' : 'weekday-col';
+        colgroup.appendChild(col);
+      });
+      table.appendChild(colgroup);
+
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
+      mondayWeekdayLabels.forEach((label, index) => {
+        const th = document.createElement('th');
+        th.textContent = label;
+        if (index === 5) th.className = 'sat';
+        if (index === 6) th.className = 'sun';
+        headRow.appendChild(th);
+      });
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      const firstDay = new Date(YEAR, 0, 1);
+      const lastDay = new Date(YEAR, 11, 31);
+      const start = addDays(firstDay, -((firstDay.getDay() + 6) % 7));
+      const end = addDays(lastDay, 6 - ((lastDay.getDay() + 6) % 7));
+      const today = todayKey();
+
+      for (let weekStart = new Date(start); weekStart <= end; weekStart = addDays(weekStart, 7)) {
+        const tr = document.createElement('tr');
+        for (let i = 0; i < 7; i++) {
+          const current = addDays(weekStart, i);
+          const key = dateKeyFromDate(current);
+          const td = document.createElement('td');
+          const dow = current.getDay();
+          const inYear = current.getFullYear() === YEAR;
+          td.className = `day-cell ${dow === 0 ? 'sun' : ''} ${dow === 6 ? 'sat' : ''} ${!inYear ? 'outside-year' : ''} ${key === today ? 'today' : ''}`;
+          td.dataset.date = key;
+          td.id = key === today ? 'today-cell' : '';
+
+          const number = document.createElement('div');
+          number.className = 'day-number';
+          const todayLabel = key === today ? '<span class="today-label">今日</span>' : '';
+          number.innerHTML = `<span>${current.getMonth()+1}/${current.getDate()}</span>${todayLabel}`;
+          td.appendChild(number);
+
+          const list = getEventsByDate(key);
+          list.slice(0, 2).forEach(ev => {
+            const pill = document.createElement('span');
+            pill.className = `event-pill ${ev.confirmed ? 'confirmed' : ''}`;
+            if (!ev.confirmed) pill.style.color = normalizeTitleColor(ev.titleColor);
+            pill.textContent = ev.title;
+            td.appendChild(pill);
+          });
+          if (list.length > 2) {
+            const more = document.createElement('div');
+            more.className = 'more-events';
+            more.textContent = `+${list.length - 2}件`;
+            td.appendChild(more);
+          }
+
+          td.addEventListener('click', () => {
+            if (!inYear) return;
+            openDayModal(key);
+          });
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+
+      table.appendChild(tbody);
+      paper.appendChild(table);
+      calendarEl.appendChild(paper);
+    }
+
+    function openDayModal(key) {
+      selectedDate = key;
+      const d = new Date(`${key}T00:00:00`);
+      dayModalTitle.textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${weekdayNames[d.getDay()]}）`;
+      const list = getEventsByDate(key);
+      dayEvents.innerHTML = '';
+
+      if (list.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'detail-card';
+        empty.innerHTML = '<p class="meta">この日の予定はありません。</p>';
+        dayEvents.appendChild(empty);
+      } else {
+        list.forEach(ev => dayEvents.appendChild(createDetailCard(ev)));
+      }
+
+      const addForDay = document.createElement('button');
+      addForDay.type = 'button';
+      addForDay.className = 'primary';
+      addForDay.textContent = 'この日に予定を追加';
+      addForDay.addEventListener('click', () => {
+        closeModal('dayModal');
+        openForm({ date: key });
+      });
+      dayEvents.appendChild(addForDay);
+
+      openModal('dayModal');
+    }
+
+    function createDetailCard(ev) {
+      const card = document.createElement('div');
+      card.className = 'detail-card';
+      const history = (ev.history || []).slice(-3).map(h => `<div>${escapeHtml(h.at)}　${escapeHtml(h.name || '未記入')}：${escapeHtml(h.action)}</div>`).join('');
+      card.innerHTML = `
+        <h3>${escapeHtml(ev.title)}</h3>
+        <label class="inline-check"><input type="checkbox" data-action="toggle-confirmed" ${ev.confirmed ? 'checked' : ''} /> 確定</label>
+        <div class="meta">投稿者：${escapeHtml(ev.authorName || '未記入')}</div>
+        <div class="meta">最終更新：${escapeHtml(ev.updatedAt || ev.createdAt || '')} / ${escapeHtml(ev.lastEditorName || ev.authorName || '未記入')}</div>
+        ${ev.description ? `<div class="detail-text">${escapeHtml(ev.description)}</div>` : ''}
+        ${history ? `<div class="history"><strong>履歴</strong>${history}</div>` : ''}
+        <div class="card-actions">
+          <button type="button" class="ghost" data-action="edit">編集</button>
+          <button type="button" class="danger" data-action="delete">非表示</button>
+        </div>
+      `;
+      card.querySelector('[data-action="toggle-confirmed"]').addEventListener('change', (e) => {
+        updateConfirmed(ev.id, e.target.checked);
+      });
+      card.querySelector('[data-action="edit"]').addEventListener('click', () => {
+        closeModal('dayModal');
+        openForm(ev);
+      });
+      card.querySelector('[data-action="delete"]').addEventListener('click', () => softDeleteEvent(ev.id));
+      return card;
+    }
+
+    function updateConfirmed(id, confirmed) {
+      const at = nowText();
+      events = events.map(ev => {
+        if (ev.id !== id) return ev;
+        const history = ev.history || [];
+        history.push({ at, name: ev.lastEditorName || '未記入', action: confirmed ? '確定に変更' : '未確定に変更' });
+        return { ...ev, confirmed, updatedAt: at, history };
+      });
+      saveEvents();
+      renderCalendar();
+      if (selectedDate) openDayModal(selectedDate);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function openForm(data = {}) {
+      document.getElementById('formTitle').textContent = data.id ? '予定編集' : '予定追加';
+      document.getElementById('eventId').value = data.id || '';
+      document.getElementById('title').value = data.title || '';
+      document.getElementById('confirmed').checked = !!data.confirmed;
+      document.getElementById('titleColor').value = normalizeTitleColor(data.titleColor);
+      document.getElementById('date').value = data.date || selectedDate || todayKey();
+      document.getElementById('description').value = data.description || '';
+      document.getElementById('editorName').value = data.id ? (data.lastEditorName || '') : '';
+      openModal('formModal');
+    }
+
+    eventForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = document.getElementById('eventId').value;
+      const editorName = document.getElementById('editorName').value.trim();
+      const payload = {
+        title: document.getElementById('title').value.trim(),
+        confirmed: document.getElementById('confirmed').checked,
+        titleColor: document.getElementById('titleColor').value,
+        date: document.getElementById('date').value,
+        description: document.getElementById('description').value.trim(),
+        updatedAt: nowText(),
+        lastEditorName: editorName || '未記入'
+      };
+
+      if (id) {
+        events = events.map(ev => {
+          if (ev.id !== id) return ev;
+          const history = ev.history || [];
+          history.push({ at: payload.updatedAt, name: payload.lastEditorName, action: '編集' });
+          return { ...ev, ...payload, history };
+        });
+      } else {
+        const createdAt = nowText();
+        events.push({
+          id: generateId(),
+          ...payload,
+          authorName: editorName || '未記入',
+          createdAt,
+          updatedAt: createdAt,
+          deleted: false,
+          history: [{ at: createdAt, name: editorName || '未記入', action: '作成' }]
+        });
+      }
+
+      saveEvents();
+      closeModal('formModal');
+      renderCalendar();
+      scrollToDate(payload.date);
+    });
+
+    function softDeleteEvent(id) {
+      const ok = confirm('この予定を画面上で非表示にします。よろしいですか？');
+      if (!ok) return;
+      const at = nowText();
+      events = events.map(ev => {
+        if (ev.id !== id) return ev;
+        const history = ev.history || [];
+        history.push({ at, name: '未記入', action: '非表示' });
+        return { ...ev, deleted: true, updatedAt: at, history };
+      });
+      saveEvents();
+      closeModal('dayModal');
+      renderCalendar();
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    document.querySelectorAll('[data-close]').forEach(btn => {
+      btn.addEventListener('click', () => closeModal(btn.dataset.close));
+    });
+
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) backdrop.classList.remove('open');
+      });
+    });
+
+    document.getElementById('addBtn').addEventListener('click', () => openForm({ date: todayKey() }));
+    document.getElementById('todayBtn').addEventListener('click', () => scrollToDate(todayKey()));
+
+    function scrollToDate(key) {
+      const cell = document.querySelector(`[data-date="${key}"]`);
+      if (cell) cell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    document.getElementById('sampleBtn')?.addEventListener('click', () => {
+      if (!confirm('サンプル予定を追加しますか？')) return;
+      const sample = [
+        { title: '練習', date: '2026-01-11', confirmed: true, titleColor: '#047857' },
+        { title: '練習試合', date: '2026-02-22', confirmed: true, titleColor: '#000000' },
+        { title: '出欠締切', date: '2026-03-06', confirmed: false, titleColor: '#000000' },
+        { title: '飲み会', date: '2026-04-18', confirmed: false, titleColor: '#000000' },
+        { title: '集合', date: '2026-05-09', confirmed: false, titleColor: '#1d4ed8' }
+      ];
+      const at = nowText();
+      sample.forEach(s => events.push({
+        id: generateId(),
+        ...s,
+        description: '',
+        authorName: 'サンプル',
+        lastEditorName: 'サンプル',
+        createdAt: at,
+        updatedAt: at,
+        deleted: false,
+        history: [{ at, name: 'サンプル', action: '作成' }]
+      }));
+      saveEvents();
+      renderCalendar();
+    });
+
+    renderCalendar();
+    setTimeout(() => scrollToDate(todayKey()), 300);
+  </script>
+</body>
+</html>
